@@ -1493,6 +1493,7 @@ void LoadSettings()
 	RegCloseKey(Settingskey);
 }
 
+/*
 static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	static HWND hGain;
@@ -2571,3 +2572,4 @@ static INT_PTR CALLBACK AdvancedDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, 
 	}
 	return FALSE;
 }
+*/

@@ -13,5 +13,5 @@ endif ()
 message(STATUS "LIBSDRPLAY_INCLUDE_DIRS - ${LIBSDRPLAY_INCLUDE_DIRS}")
 message(STATUS "LIBSDRPLAY_LIBRARIES - ${LIBSDRPLAY_LIBRARIES}")
 
-add_directory(src)
+add_subdirectory(src)
 

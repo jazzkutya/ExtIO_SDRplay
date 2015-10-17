@@ -30,6 +30,7 @@ For more information, please refer to <http://unlicense.org>
 typedef void* HWND;
 typedef unsigned int UINT;
 typedef UINT* UINT_PTR;
+#define TCHAR char
 
 // MessageBox uType stuff
 #define MB_ICONERROR 1
@@ -65,6 +66,7 @@ typedef UINT* UINT_PTR;
 #include <sys/timeb.h>
 #include <ctime>
 #include <unistd.h>
+#include <pthread.h>
 
 using namespace std;
 
@@ -90,7 +92,6 @@ using namespace std;
 #define DEBUG 0
 #define DcRemovalFilterCoef (short)0.002
 
-#define TCHAR char
 
 //Globals for monioring SDRplay Condition.
 static int DcCompensationMode;
@@ -232,8 +233,10 @@ static device *connected_devices = NULL;
 static int device_count = 0;
 
 // Thread handle
-//HANDLE worker_handle=INVALID_HANDLE_VALUE;
-void ThreadProc(ThreadContainer*);
+pthread_t *worker_handle=NULL;
+pthread_t worker_handle_data;
+
+void* ThreadProc(ThreadContainer*);
 int Start_Thread();
 int Stop_Thread();
 int FindSampleRateIdx(double);
@@ -613,9 +616,9 @@ int LIBSDRplay_API __stdcall GetStatus()
 
 int Start_Thread()
 {
-    /*
+    int rv;
 	//If already running, exit
-	if (worker_handle != INVALID_HANDLE_VALUE)
+	if (worker_handle != NULL)
 	{
 		MessageBox(NULL, TEXT("Start Thread return -1"), NULL, MB_OK);
 		return -1;
@@ -628,32 +631,34 @@ int Start_Thread()
 	ThreadVariables.IFMode = IFMode;
 	ThreadVariables.Bandwidth = Bandwidth;
 	ThreadVariables.DcOffsetComp = PostTunerDcCompensation;
-	worker_handle = (HANDLE)_beginthread((void(*)(void*))ThreadProc, 0, (void*)&ThreadVariables);	
-	if (worker_handle == INVALID_HANDLE_VALUE)
-	{
-
-		MessageBox(NULL, TEXT("Start Thread return -1"), NULL, MB_OK);
+	//worker_handle = (HANDLE)_beginthread((void(*)(void*))ThreadProc, 0, (void*)&ThreadVariables);	
+    rv=pthread_create(&worker_handle_data,NULL,(void*(*)(void*))ThreadProc,(void*)&ThreadVariables);
+	//if (worker_handle == INVALID_HANDLE_VALUE)
+	if (rv!=0) {
+        char errmsg[80*5];
+        snprintf(errmsg,80*5,"Start Thread return error: %s",strerror(rv));
+		MessageBox(NULL, TEXT(errmsg), NULL, MB_OK);
 		return -1;
 	}
-	SetThreadPriority(worker_handle, THREAD_PRIORITY_TIME_CRITICAL);
-    */
+    worker_handle=&worker_handle_data;
+    // TODO but this will need root
+	//SetThreadPriority(worker_handle, THREAD_PRIORITY_TIME_CRITICAL);
 	return 0;
 }
 
 int Stop_Thread()
 {
-    /*
-	if(worker_handle == INVALID_HANDLE_VALUE)
+	if(worker_handle == NULL)
 		return -1;
 	ThreadExitFlag = 1;
-	WaitForSingleObject(worker_handle,INFINITE);
+	//WaitForSingleObject(worker_handle,INFINITE);
+    pthread_join(*worker_handle,NULL);
+	worker_handle=NULL;
 	// CloseHandle(worker_handle);		//  _endthread automatically closes the thread handle!
-	worker_handle=INVALID_HANDLE_VALUE;
-    */
 	return 0;
 }
 
-void ThreadProc(ThreadContainer* ThreadVariables)
+void* ThreadProc(ThreadContainer* ThreadVariables)
 {
     /*
 	// Variables for IQ Readback
@@ -972,6 +977,7 @@ cleanUpThread:
 
 	_endthread();
     */
+    return NULL;
 }
 
 void SDRplayInitalise()

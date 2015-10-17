@@ -24,27 +24,44 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org>
 */
-#include <Windows.h>
-#include <WindowsX.h>
-#include <commctrl.h>
-#include <process.h>
-#include <tchar.h>
+
+
+// some compatibility hacks that should be in a separate header file
+typedef void* HWND;
+typedef unsigned int UINT;
+typedef UINT* UINT_PTR;
+
+// MessageBox uType stuff
+#define MB_ICONERROR 1
+#define MB_OK 2
+#define MB_SYSTEMMODAL 4
+#define MB_TOPMOST 8
+#define MB_ICONEXCLAMATION 16
+
+#define TEXT(arg) arg
+#define Sleep(msec) usleep((msec)*1000)
+#define __stdcall
+
+#define FALSE 0
+#define TRUE 1
+
+#define sprintf_s snprintf
+
 #include <new>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
-#include <dos.h>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
 #include <vector>
-#include "resource.h"
 #include "ExtIO_SDRplay.h"
-#include "mir_sdr.h"
+#include <mirsdrapi-rsp.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
-#include <timeapi.h>
 #include <ctime>
+#include <unistd.h>
 
 using namespace std;
 
@@ -69,6 +86,8 @@ using namespace std;
 #define DCTrackTimeInterval 2.93
 #define DEBUG 0
 #define DcRemovalFilterCoef (short)0.002
+
+#define TCHAR char
 
 //Globals for monioring SDRplay Condition.
 static int DcCompensationMode;
@@ -174,8 +193,8 @@ const int band_MIXgain[NUM_BANDS] = { 19,			19,			19,			19,			19,			19,			19,			
 const int band_fullTune[NUM_BANDS]= { 1,			1,			1,			1,			1,			1,			1,			1		};
 const int band_MaxGR[NUM_BANDS] =	{ 102,			102,		102,		102,		102,		102,		85,			85		};
 
-static HMODULE ApiDll = NULL;
-HMODULE Dll = NULL;
+//static HMODULE ApiDll = NULL;
+//HMODULE Dll = NULL;
 
 mir_sdr_Init_t                   mir_sdr_Init_fn = NULL;
 mir_sdr_Uninit_t                 mir_sdr_Uninit_fn = NULL;
@@ -210,7 +229,7 @@ static device *connected_devices = NULL;
 static int device_count = 0;
 
 // Thread handle
-HANDLE worker_handle=INVALID_HANDLE_VALUE;
+//HANDLE worker_handle=INVALID_HANDLE_VALUE;
 void ThreadProc(ThreadContainer*);
 int Start_Thread();
 int Stop_Thread();
@@ -230,11 +249,11 @@ void (* WinradCallBack)(int, int, float, void *) = NULL;
 #define WINRAD_LORELEASED 103
 #define HDSDR_RX_LEFT	131
 
-static INT_PTR CALLBACK MainDlgProc(HWND, UINT, WPARAM, LPARAM);
-HWND h_dialog=NULL;
+//static INT_PTR CALLBACK MainDlgProc(HWND, UINT, WPARAM, LPARAM);
+//HWND h_dialog=NULL;
 
-static INT_PTR CALLBACK AdvancedDlgProc(HWND, UINT, WPARAM, LPARAM);
-HWND h_AdvancedDialog = NULL;
+//static INT_PTR CALLBACK AdvancedDlgProc(HWND, UINT, WPARAM, LPARAM);
+//HWND h_AdvancedDialog = NULL;
 
 int pll_locked=0;
 
@@ -257,73 +276,28 @@ const char * getMirErrText(mir_sdr_ErrT err)
 	}
 }
 
+
+int MessageBox(HWND, const char *msg, const char *title, UINT ignored) {
+    fprintf(stderr,"msgbox: %s: %s",title,msg);
+}
 extern "C"
-bool  LIBSDRplay_API __stdcall InitHW(char *name, char *model, int& type)
+bool  LIBSDRplay_API __stdcall InitHW(const char *name, const char *model, int& type)
 {
 	//Following code loads the API into memmory
 
-	char APIkeyValue[8192];
-	char ToolskeyValue[8192];
-	char tmpStringA[8192];
-	char str[1024 + 8192];
-	DWORD APIkeyValue_length = 8192;
-	DWORD ToolskeyValue_length = 8192;
-	HKEY APIkey;
+	//char APIkeyValue[8192];
+	//char ToolskeyValue[8192];
+	//char tmpStringA[8192];
+	//char str[1024 + 8192];
+	//DWORD APIkeyValue_length = 8192;
+	//DWORD ToolskeyValue_length = 8192;
+	//HKEY APIkey;
 	mir_sdr_ErrT err;
 	mir_sdr_If_kHzT IFMode;
 	mir_sdr_Bw_MHzT Bandwidth;
 	int error;
-		
-	if (RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("SOFTWARE\\MiricsSDR\\API"), &APIkey) != ERROR_SUCCESS)
-	{
-		error = GetLastError();
-		_stprintf_s(str, TEXT("Failed to locate API registry entry\nHKEY_LOCAL_MACHINE\\SOFTWARE\\MiricsSDR\\API\nERROR %d\n"), error);
-		MessageBox(NULL, str ,TEXT("SDRplay ExtIO DLL"),MB_ICONERROR | MB_OK);
-		return false;
-	}
-	else
-	{
-		RegQueryValueEx(APIkey, "Install_Dir", NULL, NULL, (LPBYTE)&APIkeyValue, &APIkeyValue_length);
-		RegCloseKey(APIkey);
-	}
-	HKEY Toolskey;
-	if (RegOpenKey(HKEY_LOCAL_MACHINE, TEXT("Software\\MiricsSDR\\Tools"), &Toolskey) != ERROR_SUCCESS)
-	{
-		error = GetLastError();
-		_stprintf_s(str, TEXT("Failed to locate API registry entry\nHKEY_LOCAL_MACHINE\\Software\\MiricsSDR\\Tools\nERROR %d\n"), error);
-		MessageBox(NULL, str, TEXT("SDRplay ExtIO DLL"), MB_ICONERROR | MB_OK);
-		return false;
-	}
-	else
-	{
-		RegQueryValueEx(Toolskey, "Install_Dir", NULL, NULL, (LPBYTE)&ToolskeyValue, &ToolskeyValue_length);
-		RegCloseKey(Toolskey);
-	}
 
-
-	#ifndef _WIN64
-		sprintf_s(tmpStringA, 8192, "%s\\x86\\mir_sdr_api.dll", APIkeyValue);
-	#else
-		sprintf_s(tmpStringA, 8192, "%s\\x64\\mir_sdr_api.dll", APIkeyValue);
-	#endif
-	LPCSTR ApiDllName = (LPCSTR)tmpStringA;
-
-	if (ApiDll == NULL)
-	{		
-		ApiDll = LoadLibrary(ApiDllName);
-	}
-	if (ApiDll == NULL)
-	{
-		ApiDll = LoadLibrary("mir_sdr_api.dll");
-	}
-	if (ApiDll == NULL)
-	{
-		error = GetLastError();
-		_stprintf_s(str, TEXT("Failed to load API DLL\n%s\nERROR %d\n"), ApiDllName, error);
-		MessageBox(NULL, str, TEXT("SDRplay ExtIO DLL"), MB_ICONERROR | MB_OK);
-		return false;
-	}
-
+    /*
 	mir_sdr_Init_fn = (mir_sdr_Init_t)GetProcAddress(ApiDll, "mir_sdr_Init");
 	mir_sdr_Uninit_fn = (mir_sdr_Uninit_t)GetProcAddress(ApiDll, "mir_sdr_Uninit");
 	mir_sdr_ReadPacket_fn = (mir_sdr_ReadPacket_t)GetProcAddress(ApiDll, "mir_sdr_ReadPacket");
@@ -339,27 +313,22 @@ bool  LIBSDRplay_API __stdcall InitHW(char *name, char *model, int& type)
 	mir_sdr_ResetUpdateFlags_fn = (mir_sdr_ResetUpdateFlags_t)GetProcAddress(ApiDll, "mir_sdr_ResetUpdateFlags");
 	mir_sdr_DownConvert_fn = (mir_sdr_DownConvert_t)GetProcAddress(ApiDll, "mir_sdr_DownConvert");
 	mir_sdr_SetParam_fn = (mir_sdr_SetParam_t)GetProcAddress(ApiDll, "mir_sdr_SetParam");
-
-	if	((mir_sdr_Init_fn == NULL) ||
-			(mir_sdr_Uninit_fn == NULL) ||
-			(mir_sdr_ReadPacket_fn == NULL) ||
-			(mir_sdr_SetRf_fn == NULL) ||
-			(mir_sdr_SetFs_fn == NULL) ||
-			(mir_sdr_SetGr_fn == NULL) ||
-			(mir_sdr_SetGrParams_fn == NULL) ||
-			(mir_sdr_SetDcMode_fn == NULL) ||
-			(mir_sdr_SetDcTrackTime_fn == NULL) ||
-			(mir_sdr_SetSyncUpdateSampleNum_fn == NULL) ||
-			(mir_sdr_SetSyncUpdatePeriod_fn == NULL) ||
-			(mir_sdr_ApiVersion_fn == NULL) ||
-			(mir_sdr_ResetUpdateFlags_fn == NULL)||
-			(mir_sdr_DownConvert_fn == NULL)||
-			(mir_sdr_SetParam_fn == NULL))
-	{
-		MessageBox(NULL, TEXT("Failed to map API DLL functions\n"), TEXT("SDRplay ExtIO DLL"), MB_ICONERROR | MB_OK);
-		FreeLibrary(ApiDll);
-		return false;
-	}
+    */
+	mir_sdr_Init_fn = mir_sdr_Init;
+	mir_sdr_Uninit_fn = mir_sdr_Uninit;
+	mir_sdr_ReadPacket_fn = mir_sdr_ReadPacket;
+	mir_sdr_SetRf_fn = mir_sdr_SetRf;
+	mir_sdr_SetFs_fn = mir_sdr_SetFs;
+	mir_sdr_SetGr_fn = mir_sdr_SetGr;
+	mir_sdr_SetGrParams_fn = mir_sdr_SetGrParams;
+	mir_sdr_SetDcMode_fn = mir_sdr_SetDcMode;
+	mir_sdr_SetDcTrackTime_fn = mir_sdr_SetDcTrackTime;
+	mir_sdr_SetSyncUpdateSampleNum_fn = mir_sdr_SetSyncUpdateSampleNum;
+	mir_sdr_SetSyncUpdatePeriod_fn = mir_sdr_SetSyncUpdatePeriod;
+	mir_sdr_ApiVersion_fn = mir_sdr_ApiVersion;
+	mir_sdr_ResetUpdateFlags_fn = mir_sdr_ResetUpdateFlags;
+	mir_sdr_DownConvert_fn = mir_sdr_DownConvert;
+	mir_sdr_SetParam_fn = mir_sdr_SetParam;
 
 	// The code below performs an init to check for the presence of the hardware. An uninit is done afterwards.
 
@@ -387,8 +356,8 @@ bool  LIBSDRplay_API __stdcall InitHW(char *name, char *model, int& type)
 extern "C"
 bool  LIBSDRplay_API __stdcall OpenHW()
 {
-    h_dialog=CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
-	ShowWindow(h_dialog, SW_HIDE);
+    //h_dialog=CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
+	//ShowWindow(h_dialog, SW_HIDE);
 	return TRUE;
 }
 
@@ -420,9 +389,9 @@ long LIBSDRplay_API __stdcall SetHWLO(unsigned long freq)
 	while (Frequency >= band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS)
 		FreqBand++;
 	LNAMIN = band_LNAgain[FreqBand];
-	SendMessage(GetDlgItem(ghwndDlg, IDC_LNASLIDER), TBM_SETRANGEMIN, (WPARAM)TRUE, (LPARAM)LNAMIN);
+	//SendMessage(GetDlgItem(ghwndDlg, IDC_LNASLIDER), TBM_SETRANGEMIN, (WPARAM)TRUE, (LPARAM)LNAMIN);
 	MAXGR = band_MaxGR[FreqBand];
-	SendMessage(GetDlgItem(ghwndDlg, IDC_GAINSLIDER), TBM_SETRANGEMAX, (WPARAM)TRUE, (LPARAM)MAXGR);
+	//SendMessage(GetDlgItem(ghwndDlg, IDC_GAINSLIDER), TBM_SETRANGEMAX, (WPARAM)TRUE, (LPARAM)MAXGR);
 
 	if (Running == FALSE)
 	{
@@ -570,34 +539,34 @@ extern "C"
 void LIBSDRplay_API __stdcall CloseHW()
 {
 	SaveSettings();
-	if (h_dialog!=NULL)
-		DestroyWindow(h_dialog);
-	if (h_AdvancedDialog != NULL)
-		DestroyWindow(h_AdvancedDialog);
+	//if (h_dialog!=NULL)
+	//	DestroyWindow(h_dialog);
+	//if (h_AdvancedDialog != NULL)
+	//	DestroyWindow(h_AdvancedDialog);
 }
 
 extern "C"
 void LIBSDRplay_API __stdcall ShowGUI()
 {
-	if (h_dialog == NULL)
-		h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
-	ShowWindow(h_dialog,SW_SHOW);
-	SetForegroundWindow(h_dialog);
+	//if (h_dialog == NULL)
+	//	h_dialog = CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
+	//ShowWindow(h_dialog,SW_SHOW);
+	//SetForegroundWindow(h_dialog);
 }
 
 extern "C"
 void LIBSDRplay_API  __stdcall HideGUI()
 {
-	ShowWindow(h_dialog,SW_HIDE);
+	//ShowWindow(h_dialog,SW_HIDE);
 }
 
 extern "C"
 void LIBSDRplay_API  __stdcall SwitchGUI()
 {
-	if (IsWindowVisible(h_dialog))
-		ShowWindow(h_dialog,SW_HIDE);
-	else
-		ShowWindow(h_dialog,SW_SHOW);
+	//if (IsWindowVisible(h_dialog))
+	//	ShowWindow(h_dialog,SW_HIDE);
+	//else
+	//	ShowWindow(h_dialog,SW_SHOW);
 }
 
 extern "C"
@@ -614,6 +583,7 @@ int LIBSDRplay_API __stdcall GetStatus()
 
 int Start_Thread()
 {
+    /*
 	//If already running, exit
 	if (worker_handle != INVALID_HANDLE_VALUE)
 	{
@@ -636,22 +606,26 @@ int Start_Thread()
 		return -1;
 	}
 	SetThreadPriority(worker_handle, THREAD_PRIORITY_TIME_CRITICAL);
+    */
 	return 0;
 }
 
 int Stop_Thread()
 {
+    /*
 	if(worker_handle == INVALID_HANDLE_VALUE)
 		return -1;
 	ThreadExitFlag = 1;
 	WaitForSingleObject(worker_handle,INFINITE);
 	// CloseHandle(worker_handle);		//  _endthread automatically closes the thread handle!
 	worker_handle=INVALID_HANDLE_VALUE;
+    */
 	return 0;
 }
 
 void ThreadProc(ThreadContainer* ThreadVariables)
 {
+    /*
 	// Variables for IQ Readback
 	unsigned int FirstSample;
 	int grChanged, grchangedstate;
@@ -967,6 +941,7 @@ cleanUpThread:
 	free(IQBuffer);
 
 	_endthread();
+    */
 }
 
 void SDRplayInitalise()
@@ -1229,6 +1204,7 @@ char AGCsetpointTxt[256];
 
 void SaveSettings()
 {
+    /*
 	HKEY Settingskey;
 	int error, AGC, LOAuto, PostDcComp;
 	DWORD dwDisposition;
@@ -1324,10 +1300,12 @@ void SaveSettings()
 		MessageBox(NULL, "Failed to save Post DC Compensation Setting", NULL, MB_OK);
 
 	RegCloseKey(Settingskey);
+    */
 }
 
 void LoadSettings()
 {
+    /*
 	HKEY Settingskey;
 	int error, tempRB;
 	DWORD DoubleSz, IntSz;
@@ -1470,6 +1448,7 @@ void LoadSettings()
 			PostTunerDcCompensation = FALSE;
 	}
 	else
+        */
 	{
 		//If cannot find any registry settings loads some appropriate defaults
 		DcCompensationMode = 3;
@@ -1490,7 +1469,7 @@ void LoadSettings()
 		PostTunerDcCompensation = TRUE;
 	}
 
-	RegCloseKey(Settingskey);
+	//RegCloseKey(Settingskey);
 }
 
 /*

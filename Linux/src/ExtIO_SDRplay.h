@@ -24,11 +24,14 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org>
 */
-
+/*
 #ifdef LIBSDRplay_EXPORTS
 #define LIBSDRplay_API __declspec(dllexport)
 #else
 #define LIBSDRplay_API __declspec(dllimport)
 #endif
+*/
 
-extern HMODULE hInst;
+#define LIBSDRplay_API
+
+//extern HMODULE hInst;

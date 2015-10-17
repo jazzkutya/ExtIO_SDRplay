@@ -488,6 +488,14 @@ long LIBSDRplay_API __stdcall GetHWSR()
 }
 
 extern "C"
+long LIBSDRplay_API __stdcall SetHWSR(long WantedSR)
+{
+    SampleRateIdx = FindSampleRateIdx(WantedSR);
+    WinradCallBack(-1, WINRAD_SRCHANGE, 0, NULL);
+	return GetHWSR();
+}
+
+extern "C"
 int LIBSDRplay_API __stdcall ExtIoGetSrates(int srate_idx, double * samplerate)
 {
 	return 1;	// ERROR

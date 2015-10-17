@@ -660,7 +660,6 @@ int Stop_Thread()
 
 void* ThreadProc(ThreadContainer* ThreadVariables)
 {
-    /*
 	// Variables for IQ Readback
 	unsigned int FirstSample;
 	int grChanged, grchangedstate;
@@ -763,7 +762,7 @@ void* ThreadProc(ThreadContainer* ThreadVariables)
 	}
 
 	// Initalise Buffers.
-	HWND dlg = GetDlgItem(NULL, IDD_SDRPLAY_SETTINGS);
+	//HWND dlg = GetDlgItem(NULL, IDD_SDRPLAY_SETTINGS);
 
 	CallbackBuffer = (short *)calloc((buffer_len_samples), sizeof(short));
 	if (CallbackBuffer == NULL)
@@ -975,8 +974,7 @@ cleanUpThread:
 	free(QagcBuffer);
 	free(IQBuffer);
 
-	_endthread();
-    */
+	//_endthread();
     return NULL;
 }
 
@@ -1493,7 +1491,7 @@ void LoadSettings()
 		Frequency = 98.8;
 		LOplan = LO120MHz;
 		GainReduction = 50;
-		AGCsetpoint = -40;
+		AGCsetpoint = -25;
 		SampleRateIdx = 8;              // 8: 2 MHz
 		SampleRateDisplayIdx = 0;
 		BandwidthIdx = 3;               // 3: 1536 kHz

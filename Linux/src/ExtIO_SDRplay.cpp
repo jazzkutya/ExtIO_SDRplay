@@ -487,6 +487,7 @@ long LIBSDRplay_API __stdcall GetHWSR()
 	return SR;
 }
 
+/* meh, linrad does not actually have UI for setting sample rate for ExtIO device
 extern "C"
 long LIBSDRplay_API __stdcall SetHWSR(long WantedSR)
 {
@@ -494,6 +495,7 @@ long LIBSDRplay_API __stdcall SetHWSR(long WantedSR)
     WinradCallBack(-1, WINRAD_SRCHANGE, 0, NULL);
 	return GetHWSR();
 }
+*/
 
 extern "C"
 int LIBSDRplay_API __stdcall ExtIoGetSrates(int srate_idx, double * samplerate)

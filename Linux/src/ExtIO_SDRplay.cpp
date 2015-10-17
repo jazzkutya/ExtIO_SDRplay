@@ -364,6 +364,7 @@ bool  LIBSDRplay_API __stdcall OpenHW()
 {
     //h_dialog=CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
 	//ShowWindow(h_dialog, SW_HIDE);
+    LoadSettings();
 	return TRUE;
 }
 
@@ -1463,10 +1464,10 @@ void LoadSettings()
 		Frequency = 98.8;
 		LOplan = LO120MHz;
 		GainReduction = 50;
-		AGCsetpoint = -15;
-		SampleRateIdx = 8;
+		AGCsetpoint = -40;
+		SampleRateIdx = 8;              // 8: 2 MHz
 		SampleRateDisplayIdx = 0;
-		BandwidthIdx = 3;
+		BandwidthIdx = 3;               // 3: 1536 kHz
 		IFmodeIdx = 0;
 		FqOffsetPPM = 0;
 		LNAGRTHRES = 59;

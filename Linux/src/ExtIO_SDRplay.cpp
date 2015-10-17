@@ -47,6 +47,8 @@ typedef UINT* UINT_PTR;
 
 #define sprintf_s snprintf
 
+// --------------------------------------------------------
+
 #include <new>
 #include <stdio.h>
 #include <stdlib.h>

@@ -364,7 +364,24 @@ bool  LIBSDRplay_API __stdcall OpenHW()
 {
     //h_dialog=CreateDialog(hInst, MAKEINTRESOURCE(IDD_SDRPLAY_SETTINGS), NULL, (DLGPROC)MainDlgProc);
 	//ShowWindow(h_dialog, SW_HIDE);
+    // these init stuff was in the gui code
     LoadSettings();
+    buffer_len_samples = buffer_sizes[buffer_default] * 1024;
+    if (IFmodeIdx == 0) IFMode = mir_sdr_IF_Zero;
+    Bandwidth = bandwidths[BandwidthIdx].bwType;
+    if (IFmodeIdx == 1) {
+        //LIF Mode
+        if (Bandwidth == mir_sdr_BW_1_536) IFMode = mir_sdr_IF_2_048;
+        if (Bandwidth == mir_sdr_BW_0_200 || Bandwidth == mir_sdr_BW_0_300 || Bandwidth == mir_sdr_BW_0_600) IFMode = mir_sdr_IF_0_450;
+    } else {
+        //ZIF Mode
+    }
+    // TODO gui code creates a timer if AGCEnabled
+    // m_timer = SetTimer(hwndDlg, ID_AGCUPDATE, 600, NULL);
+    // i don't see any code than handles this timer event?
+    //FreqBand = 0;
+    //while (Frequency > band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS) FreqBand++;
+
 	return TRUE;
 }
 
@@ -552,6 +569,7 @@ void LIBSDRplay_API __stdcall CloseHW()
 	//	DestroyWindow(h_AdvancedDialog);
 }
 
+/*
 extern "C"
 void LIBSDRplay_API __stdcall ShowGUI()
 {
@@ -560,13 +578,17 @@ void LIBSDRplay_API __stdcall ShowGUI()
 	//ShowWindow(h_dialog,SW_SHOW);
 	//SetForegroundWindow(h_dialog);
 }
+*/
 
+/*
 extern "C"
 void LIBSDRplay_API  __stdcall HideGUI()
 {
 	//ShowWindow(h_dialog,SW_HIDE);
 }
+*/
 
+/*
 extern "C"
 void LIBSDRplay_API  __stdcall SwitchGUI()
 {
@@ -575,6 +597,7 @@ void LIBSDRplay_API  __stdcall SwitchGUI()
 	//else
 	//	ShowWindow(h_dialog,SW_SHOW);
 }
+*/
 
 extern "C"
 void LIBSDRplay_API __stdcall SetCallback(void(*myCallBack)(int, int, float, void *))

@@ -55,6 +55,7 @@ typedef UINT* UINT_PTR;
 #include <math.h>
 #include <iostream>
 #include <fstream>
+#include <string.h>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -282,8 +283,9 @@ const char * getMirErrText(mir_sdr_ErrT err)
 int MessageBox(HWND, const char *msg, const char *title, UINT ignored) {
     fprintf(stderr,"msgbox: %s: %s",title,msg);
 }
+
 extern "C"
-bool  LIBSDRplay_API __stdcall InitHW(const char *name, const char *model, int& type)
+bool  LIBSDRplay_API __stdcall InitHW(char *name, char *model, int& type)
 {
 	//Following code loads the API into memmory
 
@@ -341,8 +343,10 @@ bool  LIBSDRplay_API __stdcall InitHW(const char *name, const char *model, int& 
 	err = mir_sdr_Init_fn(60, 2.0, 98.8, Bandwidth, IFMode, &SampleCount);
 	if (err == mir_sdr_Success)
 	{
-		name = "SDRplay";
-		model = "Radio Spectrum Processor";
+        strcpy(name,"SDRPlay");
+        strcpy(model,"Radio Spectrum Processor");
+		//name = "SDRplay";
+		//model = "Radio Spectrum Processor";
 		type = 3;	
 		mir_sdr_Uninit_fn();
 		return TRUE;

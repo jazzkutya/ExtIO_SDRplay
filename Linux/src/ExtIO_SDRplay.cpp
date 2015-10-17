@@ -1517,6 +1517,45 @@ void LoadSettings()
 	//RegCloseKey(Settingskey);
 }
 
+void SDRPlay_setgr(int GR) {
+    if (!AGCEnabled)
+    {
+        int FreqBand;
+        //if (ghwndDlg)	// update only when already initialized!
+            GainReduction = _ttoi(GR);
+
+        FreqBand = 0;
+        while (Frequency > band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS)
+            FreqBand++;
+
+        if (Running == TRUE)
+        {
+            int programmed = 0;
+            int count = 0;
+            while (programmed == 0)
+            {
+                if (ThreadVariables.GrToggle != LastGrToggle)
+                {
+                    SDRplayInitalise();
+                    programmed = 1;
+                }
+                else
+                {
+                    programmed = 0;
+                    Sleep(25);
+                    if (count == 4)
+                    {
+                        SDRplayInitalise();
+                        programmed = 1;
+                    }
+                    count++;
+                }
+            }
+        }
+        return TRUE;
+    }
+}
+
 /*
 static INT_PTR CALLBACK MainDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{

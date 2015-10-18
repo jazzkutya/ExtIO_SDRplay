@@ -241,6 +241,7 @@ int Start_Thread();
 int Stop_Thread();
 int FindSampleRateIdx(double);
 void SDRplayInitalise(void);
+bool SDRPlay_setgr(int GR);
 void SaveSettings(void);
 void LoadSettings(void);
 bool InitRequired(bool, bool, int*, bool*, double, double, mir_sdr_Bw_MHzT, mir_sdr_If_kHzT, int);
@@ -497,6 +498,37 @@ long LIBSDRplay_API __stdcall SetHWSR(int WantedSR)
 	return GetHWSR();
 }
 */
+
+extern "C"
+void LIBSDRplay_API __stdcall SetRFGain(int gain)
+{
+    // linrad sets gain -6..44
+    int FreqBand = 0;
+    while (Frequency > band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS) FreqBand++;
+	int MAXGR = band_MaxGR[FreqBand];
+    int linrad_MAXGR=MAXGR;
+    if (linrad_MAXGR>90) linrad_MAXGR=90;
+    int mygr=linrad_MAXGR-(gain+6);      // -6 is 90 GR, 44 is 40 GR
+    if (mygr>MAXGR) mygr=MAXGR;
+    if (mygr<0) mygr=0;
+    AGCEnabled=false;
+    SDRPlay_setgr(mygr);
+}
+
+extern "C"
+int LIBSDRplay_API __stdcall GetRFGain(void)
+{
+    int FreqBand = 0;
+    while (Frequency > band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS) FreqBand++;
+	int MAXGR = band_MaxGR[FreqBand];
+    int linrad_MAXGR=MAXGR;
+    if (linrad_MAXGR>90) linrad_MAXGR=90;
+    // linrad sets gain -6..44
+    // gr=90-(gain+6)
+    // gr=90-gain-6
+    // gain=90-6-gr
+    return linrad_MAXGR-6-GainReduction;
+}
 
 extern "C"
 int LIBSDRplay_API __stdcall ExtIoGetSrates(int srate_idx, double * samplerate)
@@ -1517,12 +1549,12 @@ void LoadSettings()
 	//RegCloseKey(Settingskey);
 }
 
-void SDRPlay_setgr(int GR) {
+bool SDRPlay_setgr(int GR) {
     if (!AGCEnabled)
     {
         int FreqBand;
         //if (ghwndDlg)	// update only when already initialized!
-            GainReduction = _ttoi(GR);
+            GainReduction = GR;
 
         FreqBand = 0;
         while (Frequency > band_fmin[FreqBand + 1] && FreqBand + 1 < NUM_BANDS)
@@ -1554,6 +1586,7 @@ void SDRPlay_setgr(int GR) {
         }
         return TRUE;
     }
+    return FALSE;
 }
 
 /*
